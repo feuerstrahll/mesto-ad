@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          clean: true
 
       - name: Check deploy secrets
         env:
@@ -29,6 +31,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Sanity check index.html
+        run: |
+          echo "== index.html ==" 
+          ls -la index.html
+          if [ -d index.html ]; then
+            echo "::warning::index.html is a directory; removing and restoring from git"
+            rm -rf index.html
+            git checkout -- index.html
+          fi
+          test -f index.html
 
       - name: Install dependencies
         run: npm install

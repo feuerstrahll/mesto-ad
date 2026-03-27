@@ -1,9 +1,10 @@
 # Mesto
 
-Интерактивный фронтенд-проект с профилем пользователя, карточками мест и работой с API `mesto.nomoreparties.co`.
+Интерактивный фронтенд-проект с профилем пользователя, карточками мест и интеграцией с API `mesto.nomoreparties.co`.
 
-Ссылка на опубликованный проект:
-`https://feuerstrahll.github.io/mesto-production/`
+## Ссылка на проект
+
+[GitHub Pages: mesto-production](https://feuerstrahll.github.io/mesto-production/)
 
 ## Технологии
 
@@ -13,27 +14,27 @@
 - Vite
 - GitHub Actions
 
-## Локальный запуск
+## Запуск проекта
 
-Установить зависимости:
+Установка зависимостей:
 
 ```bash
 npm install
 ```
 
-Запустить локальный сервер разработки:
+Запуск локального сервера разработки:
 
 ```bash
 npm run dev
 ```
 
-Собрать проект:
+Сборка проекта:
 
 ```bash
 npm run build
 ```
 
-Открыть локальный preview собранной версии:
+Локальный preview собранной версии:
 
 ```bash
 npm run preview
@@ -42,7 +43,7 @@ npm run preview
 ## Публикация
 
 Публикация выполняется через GitHub Actions из файла `.github/workflows/deploy.yml`.
-После коммита и пуша в `master` workflow собирает проект и отправляет `dist` в публичный репозиторий GitHub Pages.
+После коммита и пуша в ветку `master` workflow собирает проект и публикует содержимое `dist` в публичный репозиторий GitHub Pages.
 
 Команды публикации:
 

@@ -46,6 +46,7 @@
           placeholder="Имя"
           minlength="2"
           maxlength="40"
+          pattern="[A-Za-zА-Яа-яЁё\-\s]+"
           required
         >
         <span id="profile-name-input-error" class="popup__error"></span>
@@ -60,7 +61,7 @@
           required
         >
         <span id="profile-description-input-error" class="popup__error"></span>
-        <button type="submit" class="button popup__button">Сохранить</button>
+        <button type="submit" class="button popup__button popup__button_disabled" disabled>Сохранить</button>
       </form>
     </div>
   </div>
@@ -79,7 +80,7 @@
           required
         >
         <span id="avatar-url-input-error" class="popup__error"></span>
-        <button type="submit" class="button popup__button">Сохранить</button>
+        <button type="submit" class="button popup__button popup__button_disabled" disabled>Сохранить</button>
       </form>
     </div>
   </div>
@@ -97,6 +98,7 @@
           placeholder="Название"
           minlength="2"
           maxlength="30"
+          pattern="[A-Za-zА-Яа-яЁё\-\s]+"
           required
         >
         <span id="place-name-input-error" class="popup__error"></span>
@@ -109,7 +111,7 @@
           required
         >
         <span id="place-link-input-error" class="popup__error"></span>
-        <button type="submit" class="button popup__button">Создать</button>
+        <button type="submit" class="button popup__button popup__button_disabled" disabled>Создать</button>
       </form>
     </div>
   </div>

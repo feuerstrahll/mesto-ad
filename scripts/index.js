@@ -6,14 +6,19 @@ import {
   getUserInfo,
   setUserInfo,
   updateAvatar,
-} from './api.js';
+} from '../src/scripts/components/api.js';
+import { clearValidation, enableValidation } from '../src/scripts/components/validation.js';
 
 const validationConfig = {
+  formSelector: '.popup__form',
   inputSelector: '.popup__input',
   submitButtonSelector: '.popup__button',
   inactiveButtonClass: 'popup__button_disabled',
   inputErrorClass: 'popup__input_type_error',
   errorClass: 'popup__error_visible',
+  textInputSelectors: ['.popup__input_type_name', '.popup__input_type_card-name'],
+  textInputPattern: /^[A-Za-zА-Яа-яЁё\- ]+$/,
+  textInputErrorMessage: 'Разрешены только латинские, кириллические буквы, знаки дефиса и пробелы.',
 };
 
 const popupProfile = document.querySelector('.popup_type_edit');
@@ -57,22 +62,27 @@ const usersStatsModalUsersList = popupInfo.querySelector('.popup__users-list');
 const infoDefinitionTemplate = document.querySelector('#popup-info-definition-template');
 const userPreviewTemplate = document.querySelector('#popup-info-user-preview-template');
 
-const forms = Array.from(document.querySelectorAll('.popup__form'));
 const popups = Array.from(document.querySelectorAll('.popup'));
 
 let currentUserId = '';
 let cardToDelete = null;
 
 const setButtonLoadingState = (buttonElement, isLoading, loadingText) => {
-  if (!buttonElement) {
-    return;
-  }
-
   if (!buttonElement.dataset.defaultText) {
     buttonElement.dataset.defaultText = buttonElement.textContent;
   }
 
   buttonElement.textContent = isLoading ? loadingText : buttonElement.dataset.defaultText;
+};
+
+const disableButton = (buttonElement) => {
+  buttonElement.disabled = true;
+  buttonElement.classList.add(validationConfig.inactiveButtonClass);
+};
+
+const enableButton = (buttonElement) => {
+  buttonElement.disabled = false;
+  buttonElement.classList.remove(validationConfig.inactiveButtonClass);
 };
 
 const openPopup = (popupElement) => {
@@ -100,112 +110,35 @@ function handleEscapeClose(evt) {
   }
 }
 
-const showInputError = (formElement, inputElement, errorMessage) => {
-  const errorElement = formElement.querySelector(`#${inputElement.id}-error`);
+const hasProfileChanges = () =>
+  inputName.value !== profileInfoName.textContent ||
+  inputAbout.value !== profileInfoAbout.textContent;
 
-  if (!errorElement) {
-    return;
-  }
-
-  inputElement.classList.add(validationConfig.inputErrorClass);
-  errorElement.textContent = errorMessage;
-  errorElement.classList.add(validationConfig.errorClass);
-};
-
-const hideInputError = (formElement, inputElement) => {
-  const errorElement = formElement.querySelector(`#${inputElement.id}-error`);
-
-  if (!errorElement) {
-    return;
-  }
-
-  inputElement.classList.remove(validationConfig.inputErrorClass);
-  errorElement.textContent = '';
-  errorElement.classList.remove(validationConfig.errorClass);
-};
-
-const hasInvalidInput = (inputList) => inputList.some((inputElement) => !inputElement.validity.valid);
-
-const isProfileFormChanged = () =>
-  inputName.value !== popupProfileForm.dataset.initialName ||
-  inputAbout.value !== popupProfileForm.dataset.initialAbout;
-
-const toggleButtonState = (formElement) => {
-  const inputList = Array.from(formElement.querySelectorAll(validationConfig.inputSelector));
-  const buttonElement = formElement.querySelector(validationConfig.submitButtonSelector);
-
-  if (!buttonElement) {
-    return;
-  }
-
-  const formRequiresChanges = formElement.dataset.requireChange === 'true';
-  const hasChanges = !formRequiresChanges || isProfileFormChanged();
-  const shouldDisable = hasInvalidInput(inputList) || !hasChanges;
-
-  buttonElement.disabled = shouldDisable;
-  buttonElement.classList.toggle(validationConfig.inactiveButtonClass, shouldDisable);
-};
-
-const checkInputValidity = (formElement, inputElement) => {
-  if (!inputElement.validity.valid) {
-    showInputError(formElement, inputElement, inputElement.validationMessage);
+const syncProfileSubmitButtonState = () => {
+  if (popupProfileForm.checkValidity() && hasProfileChanges()) {
+    enableButton(popupProfileSubmitButton);
   } else {
-    hideInputError(formElement, inputElement);
+    disableButton(popupProfileSubmitButton);
   }
-};
-
-const clearValidation = (formElement) => {
-  const inputList = Array.from(formElement.querySelectorAll(validationConfig.inputSelector));
-
-  inputList.forEach((inputElement) => {
-    hideInputError(formElement, inputElement);
-  });
-
-  toggleButtonState(formElement);
-};
-
-const enableValidation = () => {
-  forms.forEach((formElement) => {
-    const inputList = Array.from(formElement.querySelectorAll(validationConfig.inputSelector));
-
-    formElement.addEventListener('submit', (evt) => {
-      if (!formElement.checkValidity()) {
-        evt.preventDefault();
-      }
-    });
-
-    inputList.forEach((inputElement) => {
-      inputElement.addEventListener('input', () => {
-        checkInputValidity(formElement, inputElement);
-        toggleButtonState(formElement);
-      });
-    });
-
-    toggleButtonState(formElement);
-  });
 };
 
 const openProfilePopup = () => {
   inputName.value = profileInfoName.textContent;
   inputAbout.value = profileInfoAbout.textContent;
-  popupProfileForm.dataset.initialName = inputName.value;
-  popupProfileForm.dataset.initialAbout = inputAbout.value;
-  popupProfileForm.dataset.requireChange = 'true';
-  clearValidation(popupProfileForm);
+  clearValidation(popupProfileForm, validationConfig);
+  syncProfileSubmitButtonState();
   openPopup(popupProfile);
 };
 
 const openAvatarPopup = () => {
   popupAvatarForm.reset();
-  popupAvatarForm.dataset.requireChange = 'false';
-  clearValidation(popupAvatarForm);
+  clearValidation(popupAvatarForm, validationConfig);
   openPopup(popupAvatar);
 };
 
 const openAddCardPopup = () => {
   popupAddForm.reset();
-  popupAddForm.dataset.requireChange = 'false';
-  clearValidation(popupAddForm);
+  clearValidation(popupAddForm, validationConfig);
   openPopup(popupAdd);
 };
 
@@ -234,9 +167,7 @@ const handleProfileFormSubmit = (evt) => {
     })
     .finally(() => {
       setButtonLoadingState(popupProfileSubmitButton, false);
-      popupProfileForm.dataset.initialName = profileInfoName.textContent;
-      popupProfileForm.dataset.initialAbout = profileInfoAbout.textContent;
-      toggleButtonState(popupProfileForm);
+      syncProfileSubmitButtonState();
     });
 };
 
@@ -249,13 +180,13 @@ const handleAvatarFormSubmit = (evt) => {
       profileImage.style.backgroundImage = `url('${userData.avatar}')`;
       popupAvatarForm.reset();
       closePopup(popupAvatar);
+      clearValidation(popupAvatarForm, validationConfig);
     })
     .catch((err) => {
       console.log(err);
     })
     .finally(() => {
       setButtonLoadingState(popupAvatarSubmitButton, false);
-      toggleButtonState(popupAvatarForm);
     });
 };
 
@@ -271,13 +202,13 @@ const handleAddCardSubmit = (evt) => {
       listContainer.prepend(createCard(newCardData));
       popupAddForm.reset();
       closePopup(popupAdd);
+      clearValidation(popupAddForm, validationConfig);
     })
     .catch((err) => {
       console.log(err);
     })
     .finally(() => {
       setButtonLoadingState(popupAddSubmitButton, false);
-      toggleButtonState(popupAddForm);
     });
 };
 
@@ -452,26 +383,26 @@ profileImage.addEventListener('keydown', (evt) => {
     openAvatarPopup();
   }
 });
-siteLogo?.addEventListener('click', handleLogoClick);
+siteLogo.addEventListener('click', handleLogoClick);
 
 popupProfileForm.addEventListener('submit', handleProfileFormSubmit);
 popupAvatarForm.addEventListener('submit', handleAvatarFormSubmit);
 popupAddForm.addEventListener('submit', handleAddCardSubmit);
 popupRemoveCardForm.addEventListener('submit', handleRemoveCardSubmit);
 
-popupProfileForm.dataset.requireChange = 'true';
-popupAvatarForm.dataset.requireChange = 'false';
-popupAddForm.dataset.requireChange = 'false';
+inputName.addEventListener('input', syncProfileSubmitButtonState);
+inputAbout.addEventListener('input', syncProfileSubmitButtonState);
 
 attachPopupListeners();
-enableValidation();
+enableValidation(validationConfig);
 
 Promise.all([getCardList(), getUserInfo()])
   .then(([cards, userData]) => {
     renderPage(cards, userData);
-    popupProfileForm.dataset.initialName = userData.name;
-    popupProfileForm.dataset.initialAbout = userData.about;
-    toggleButtonState(popupProfileForm);
+    clearValidation(popupProfileForm, validationConfig);
+    clearValidation(popupAvatarForm, validationConfig);
+    clearValidation(popupAddForm, validationConfig);
+    syncProfileSubmitButtonState();
   })
   .catch((err) => {
     console.log(err);

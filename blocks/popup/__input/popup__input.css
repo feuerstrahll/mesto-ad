@@ -10,8 +10,22 @@
   margin-bottom: 10px;
 }
 
-.popup__input:last-of-type {
-  margin-bottom: 0;
+.popup__input_type_error {
+  border-bottom-color: #f00;
+}
+
+.popup__error {
+  min-height: 30px;
+  display: block;
+  color: #f00;
+  font-size: 12px;
+  line-height: 15px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.popup__error_visible {
+  opacity: 1;
 }
 
 @media screen and (max-width: 568px) {

@@ -7,7 +7,15 @@ const config = {
 };
 
 const getResponseData = (res) => {
-  return res.ok ? res.json() : Promise.reject(`Ошибка: ${res.status}`);
+  if (!res.ok) {
+    return Promise.reject(`Ошибка: ${res.status}`);
+  }
+
+  if (res.status === 204) {
+    return Promise.resolve({});
+  }
+
+  return res.json();
 };
 
 export const getUserInfo = () => {

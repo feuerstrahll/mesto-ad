@@ -1,0 +1,8 @@
+.popup__info-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+}

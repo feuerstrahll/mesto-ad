@@ -7,6 +7,13 @@
 @import url('./__button/popup__button.css');
 @import url('./__caption/popup__caption.css');
 @import url('./__image/popup__image.css');
+@import url('./__info-list/popup__info-list.css');
+@import url('./__info-item/popup__info-item.css');
+@import url('./__info-label/popup__info-label.css');
+@import url('./__info-value/popup__info-value.css');
+@import url('./__users-title/popup__users-title.css');
+@import url('./__users-list/popup__users-list.css');
+@import url('./__users-item/popup__users-item.css');
 
 .popup {
   font-family: 'Inter', Arial, sans-serif;

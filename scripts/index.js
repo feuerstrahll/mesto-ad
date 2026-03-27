@@ -58,7 +58,9 @@ const popupPic = popupImage.querySelector('.popup__image');
 const popupCaption = popupImage.querySelector('.popup__caption');
 
 const usersStatsModalInfoList = popupInfo.querySelector('.popup__info-list');
+const usersStatsModalUsersList = popupInfo.querySelector('.popup__users-list');
 const infoDefinitionTemplate = document.querySelector('#popup-info-definition-template');
+const userPreviewTemplate = document.querySelector('#popup-info-user-preview-template');
 
 const popups = Array.from(document.querySelectorAll('.popup'));
 
@@ -252,6 +254,12 @@ const createInfoString = (label, value) => {
   return listItem;
 };
 
+const createUserPreview = (userName) => {
+  const listItem = userPreviewTemplate.content.querySelector('.popup__users-item').cloneNode(true);
+  listItem.textContent = userName;
+  return listItem;
+};
+
 const formatDate = (date) =>
   date.toLocaleDateString('ru-RU', {
     year: 'numeric',
@@ -263,44 +271,71 @@ const handleLogoClick = () => {
   getCardList()
     .then((cards) => {
       usersStatsModalInfoList.innerHTML = '';
+      usersStatsModalUsersList.innerHTML = '';
 
       if (!cards.length) {
-        usersStatsModalInfoList.append(createInfoString('Карточек в ленте:', '0'));
+        usersStatsModalInfoList.append(createInfoString('Всего карточек:', '0'));
+        usersStatsModalInfoList.append(createInfoString('Первая создана:', '-'));
+        usersStatsModalInfoList.append(createInfoString('Последняя создана:', '-'));
+        usersStatsModalInfoList.append(createInfoString('Всего пользователей:', '0'));
+        usersStatsModalInfoList.append(createInfoString('Максимум карточек от одного:', '0'));
         openPopup(popupInfo);
         return;
       }
 
-      const uniqueOwners = new Set(cards.map((card) => card.owner?.name).filter(Boolean));
-      const totalLikes = cards.reduce((sum, card) => sum + (card.likes?.length ?? 0), 0);
-      const mostPopularCard = cards.reduce((topCard, card) => {
-        if (!topCard || (card.likes?.length ?? 0) > (topCard.likes?.length ?? 0)) {
-          return card;
+      const sortedCards = [...cards].sort(
+        (firstCard, secondCard) => new Date(firstCard.createdAt) - new Date(secondCard.createdAt)
+      );
+      const usersById = cards.reduce((usersMap, card) => {
+        const ownerId = card.owner?._id;
+        const ownerName = card.owner?.name;
+
+        if (!ownerId || !ownerName) {
+          return usersMap;
         }
 
-        return topCard;
-      }, null);
+        const currentUser = usersMap.get(ownerId);
+
+        if (currentUser) {
+          currentUser.cardsCount += 1;
+        } else {
+          usersMap.set(ownerId, {
+            name: ownerName,
+            cardsCount: 1,
+          });
+        }
+
+        return usersMap;
+      }, new Map());
+      const users = Array.from(usersById.values()).sort((firstUser, secondUser) =>
+        firstUser.name.localeCompare(secondUser.name, 'ru')
+      );
+      const maxCardsPerUser = users.reduce(
+        (maxCards, user) => Math.max(maxCards, user.cardsCount),
+        0
+      );
 
       usersStatsModalInfoList.append(
-        createInfoString('Карточек в ленте:', String(cards.length))
+        createInfoString('Всего карточек:', String(cards.length))
       );
       usersStatsModalInfoList.append(
-        createInfoString('Уникальных авторов:', String(uniqueOwners.size))
-      );
-      usersStatsModalInfoList.append(
-        createInfoString('Первая создана:', formatDate(new Date(cards[cards.length - 1].createdAt)))
-      );
-      usersStatsModalInfoList.append(
-        createInfoString('Последняя создана:', formatDate(new Date(cards[0].createdAt)))
-      );
-      usersStatsModalInfoList.append(
-        createInfoString('Количество лайков:', String(totalLikes))
+        createInfoString('Первая создана:', formatDate(new Date(sortedCards[0].createdAt)))
       );
       usersStatsModalInfoList.append(
         createInfoString(
-          'Самая популярная картинка:',
-          `${mostPopularCard.name} (${mostPopularCard.likes.length} лайков)`
+          'Последняя создана:',
+          formatDate(new Date(sortedCards[sortedCards.length - 1].createdAt))
         )
       );
+      usersStatsModalInfoList.append(
+        createInfoString('Всего пользователей:', String(users.length))
+      );
+      usersStatsModalInfoList.append(
+        createInfoString('Максимум карточек от одного:', String(maxCardsPerUser))
+      );
+      users.forEach((user) => {
+        usersStatsModalUsersList.append(createUserPreview(user.name));
+      });
 
       openPopup(popupInfo);
     })

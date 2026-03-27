@@ -10,16 +10,26 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
+      - name: Check deploy secrets
+        env:
+          PUBLIC_PAGES_REPO: ${{ secrets.PUBLIC_PAGES_REPO }}
+          PUBLIC_PAGES_TOKEN: ${{ secrets.PUBLIC_PAGES_TOKEN }}
+        run: |
+          if [ -z "$PUBLIC_PAGES_REPO" ] || [ -z "$PUBLIC_PAGES_TOKEN" ]; then
+            echo "::error::В Settings → Secrets → Actions задайте PUBLIC_PAGES_REPO (owner/repo) и PUBLIC_PAGES_TOKEN (PAT с правом push в целевой репозиторий)."
+            exit 1
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-            node-version: '>=22.12'
-            cache: 'npm'
+          node-version: '22'
+          cache: npm
 
       - name: Install dependencies
         run: npm install
@@ -27,13 +37,16 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Verify dist exists
+        run: test -d dist && ls -la dist || (echo "::error::Папка dist не создана — проверьте npm run build локально." && exit 1)
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           personal_token: ${{ secrets.PUBLIC_PAGES_TOKEN }}
           external_repository: ${{ secrets.PUBLIC_PAGES_REPO }}
           publish_dir: ./dist
-          publish_branch: ${{ secrets.PUBLIC_PAGES_BRANCH || 'main' }}
+          publish_branch: ${{ secrets.PUBLIC_PAGES_BRANCH != '' && secrets.PUBLIC_PAGES_BRANCH || 'main' }}
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
           commit_message: 'deploy: update build'
